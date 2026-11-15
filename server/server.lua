@@ -70,7 +70,11 @@ local function useConsumable(src, category, item, data, itemData)
     -- The client reports its own result, so a modified client could answer at once.
     -- A real use cannot come back before the progress duration has elapsed.
     if GetGameTimer() - startedAt < (data.duration or 1000) - FINISH_TOLERANCE then
-        print(('[kora_consumables] %s used %s faster than its %sms duration; ignored'):format(src, item, data.duration or 1000))
+        Kora.logging.warn('consume.too_fast_ignored', 'Item use finished faster than its duration and was ignored', {
+            playerId = src,
+            item = item,
+            durationMs = data.duration or 1000,
+        })
         return
     end
 

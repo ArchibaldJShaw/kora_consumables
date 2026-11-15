@@ -29,7 +29,7 @@ If an item has an `event` field in the config, or a `replenish.event` added with
 ```lua
 -- client, in your own resource
 RegisterNetEvent('myresource:client:flaskUsed', function(item)
-    print('used', item)
+    Kora.logging.info('flask.used', 'Flask used', { item = item })
 end)
 ```
 
