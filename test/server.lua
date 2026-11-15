@@ -41,7 +41,12 @@ exports = setmetatable({
 }, { __call = function() end })
 local clock, elapsed, duringProgress = 0, 4000, nil
 GetGameTimer = function() return clock end
+local logged = {}
 Kora = {
+    lang = function(key) return key end,
+    logging = setmetatable({}, { __index = function(_, level)
+        return function(event, message, fields) logged[#logged + 1] = { level = level, event = event, message = message, fields = fields }; return true end
+    end }),
     compat = { provideExport = function() end },
     config = {
         enum = function(value) return value end,
@@ -198,6 +203,11 @@ elapsed = 100
 use(2)
 equal(#statuses, 0, 'a reply faster than the duration is ignored')
 equal(#removals, 0)
+equal(#logged, 1, 'the ignored reply is logged once')
+equal(logged[1].level, 'warn', 'ignored fast reply is a warning')
+equal(logged[1].event, 'consume.too_fast_ignored', 'stable event name')
+equal(logged[1].fields.playerId, 17, 'player in fields')
+equal(logged[1].fields.item, 'sandwich', 'item in fields')
 elapsed = definition.duration - 100
 use(2)
 equal(#statuses, 1, 'timer granularity allowance still accepts a real use')

@@ -37,7 +37,7 @@ Server resources written for qb-smallresources can call the legacy exports. They
 ```lua title="server.lua"
 -- server script of another resource (runs once at start, after kora_consumables)
 local ok, reason = exports.kora_consumables:AddFood('burrito', 35)
-if not ok then print(('burrito not added: %s'):format(reason)) end
+if not ok then Kora.logging.warn('food.add_failed', 'Food was not added', { item = 'burrito', reason = tostring(reason) }) end
 ```
 
 > **Note:** These exports only change the running session. Items added this way are kept in memory and are lost when this resource restarts, so call them again from your own `onResourceStart` handler for `kora_consumables` as well as on your own start.

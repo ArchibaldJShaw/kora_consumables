@@ -63,7 +63,10 @@ local function usableProp(prop, item)
         return prop
     end
     if Config.Debug then
-        print(('[kora_consumables] skipping prop for %s: invalid model %s'):format(tostring(item), tostring(model)))
+        Kora.logging.debug('consume.prop_skipped', 'Skipping prop because its model is invalid', {
+            item = tostring(item),
+            model = tostring(model),
+        })
     end
     return nil
 end
@@ -128,7 +131,10 @@ Kora.callback.register('kora_consumables:progress', function(data)
     })
     if not started then
         if Config.Debug then
-            print(('[kora_consumables] progress failed for %s: %s'):format(tostring(data.item), tostring(progress)))
+            Kora.logging.debug('consume.progress_failed', 'Progress did not start', {
+                item = tostring(data.item),
+                progress = tostring(progress),
+            })
         end
         return false
     end
