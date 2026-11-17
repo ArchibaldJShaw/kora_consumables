@@ -77,6 +77,10 @@ local function movementAllowed(itemData, class)
     if itemData.allowMovement ~= nil then
         return itemData.allowMovement == true
     end
+    local classDefaults = Config.ConsumableClasses and Config.ConsumableClasses[class]
+    if classDefaults and classDefaults.allowMovement ~= nil then
+        return classDefaults.allowMovement == true
+    end
     local setting = Config.allowMovement
     if type(setting) == 'table' then
         setting = setting[class]
@@ -105,6 +109,7 @@ Kora.callback.register('kora_consumables:progress', function(data)
     if not itemData then
         return false
     end
+    local animation = itemData.animation
     local prop = usableProp(itemData.prop, data.item)
     local progressProp
     local progressProps
@@ -124,6 +129,23 @@ Kora.callback.register('kora_consumables:progress', function(data)
         disable.car = disable.vehicle
     end
     local anim = itemData.anim or nil
+    local emote = itemData.emote
+    local propTwo = usableProp(itemData.proptwo, data.item)
+    if type(animation) == 'table' then
+        if animation.mode == 'emote' then
+            emote = animation.emote
+            anim, progressProp, progressProps = nil, nil, nil
+            propTwo = nil
+        elseif animation.mode == 'animation' then
+            emote = nil
+            anim = {dict = animation.dict, clip = animation.clip, flag = animation.flag}
+            progressProp = usableProp(animation.prop or itemData.prop, data.item)
+            propTwo = usableProp(animation.proptwo or itemData.proptwo, data.item)
+            progressProps = nil
+        end
+    elseif emote then
+        anim, progressProp, progressProps, propTwo = nil, nil, nil, nil
+    end
     if movementAllowed(itemData, data.class) then
         if type(disable) == 'table' and disable.move then
             disable = Kora.util.deepClone(disable)
@@ -139,8 +161,9 @@ Kora.callback.register('kora_consumables:progress', function(data)
         canCancel = itemData.canCancel == nil or itemData.canCancel,
         anim = anim,
         prop = progressProp,
+        proptwo = propTwo,
         props = progressProps,
-        emote = itemData.emote or nil,
+        emote = emote,
         disable = disable,
     })
     if not started then
@@ -166,6 +189,17 @@ RegisterNetEvent('kora_consumables:register', function(entries)
             Config.Consumables[entry.class][entry.item] = entry.data
         end
     end
+end)
+
+RegisterNetEvent('kora_consumables:catalog', function(catalog, classes)
+    if type(catalog) ~= 'table' then return end
+    for class in pairs(Config.Consumables) do Config.Consumables[class] = nil end
+    for class, items in pairs(catalog) do
+        if type(class) == 'string' and type(items) == 'table' then
+            Config.Consumables[class] = items
+        end
+    end
+    if type(classes) == 'table' then Config.ConsumableClasses = classes end
 end)
 
 CreateThread(function()

@@ -109,8 +109,11 @@ defaults.custom = {
     },
 }
 
+Config.ConsumableClasses = Config.ConsumableClasses or defaults
+
 function ApplyConsumableDefaults(class, item, data)
-    local default = defaults[class]
+    local default = Config.ConsumableClasses[class] or Config.ConsumableClasses.custom
+    if data.emote == nil then data.emote = default.emote end
     if not data.label then
         local definition = exports.kora_core:getShared('items', item)
         data.label = default.label .. (definition and definition.label or '')
@@ -126,6 +129,9 @@ function ApplyConsumableDefaults(class, item, data)
     elseif type(data.prop) == 'table' and not data.prop.coords and default.prop then
         -- A partial prop (for example only a model) inherits the class bone, offset and rotation.
         data.prop = resolveProp(default.prop, class, data.prop)
+    end
+    if data.proptwo == nil then
+        data.proptwo = default.proptwo
     end
     if not data.disable then
         data.disable = default.disable
@@ -143,7 +149,7 @@ end
 -- so a defaulted label may hold only the class prefix ('Eating '). Complete it
 -- from the registry when the item is used.
 function ConsumableLabel(class, item, data)
-    local default = defaults[class]
+    local default = Config.ConsumableClasses[class] or Config.ConsumableClasses.custom
     if default and data.label == default.label then
         local definition = exports.kora_core:getShared('items', item)
         if definition and definition.label then

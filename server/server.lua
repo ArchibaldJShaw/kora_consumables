@@ -79,7 +79,7 @@ local function useConsumable(src, category, item, data, itemData)
     applyUse(src, item, data, itemData)
 end
 
-local function registerUseable(category, item, data)
+function registerUseable(category, item, data)
     exports.kora_core:createUseable(item, function(source, itemData)
         local src = source
         if using[src] then return false end
@@ -102,14 +102,17 @@ local function registerUseables()
 end
 
 
-registerUseables()
+CreateThread(function()
+    while not ConsumableDataLoaded and not ConsumableDataFailed do Wait(100) end
+    if ConsumableDataLoaded then registerUseables() end
+end)
 
 -- kora_inventory ships instant built-in handlers for some of the same items
 -- (water_bottle, sandwich, beer...). Its handlers register when it starts, so a
 -- later inventory (re)start would replace ours; register again to keep ours.
 AddEventHandler('onResourceStart', function(resource)
     if resource == 'kora_inventory' then
-        registerUseables()
+        if ConsumableDataLoaded then registerUseables() end
     end
 end)
 
@@ -222,9 +225,11 @@ local function legacyAdd(export, name, value)
         return false, 'item does not exist'
     end
 
+    ApplyConsumableDefaults(class, name, data)
+    local saved, saveError = SaveConsumable(class, name, data)
+    if not saved then return false, saveError end
     Config.Consumables[class] = Config.Consumables[class] or {}
     Config.Consumables[class][name] = data
-    ApplyConsumableDefaults(class, name, data)
     added[#added + 1] = {class = class, item = name, data = data}
     registerUseable(class, name, data)
     TriggerClientEvent('kora_consumables:register', -1, {added[#added]})
@@ -240,9 +245,12 @@ end
 RegisterNetEvent('kora_consumables:sync', function()
     local src = source
     local now = GetGameTimer()
-    if #added == 0 or (lastSync[src] and now - lastSync[src] < SYNC_COOLDOWN) then return end
+    if lastSync[src] and now - lastSync[src] < SYNC_COOLDOWN then return end
     lastSync[src] = now
-    TriggerClientEvent('kora_consumables:register', src, added)
+    CreateThread(function()
+        while not ConsumableDataLoaded and not ConsumableDataFailed do Wait(100) end
+        if ConsumableDataLoaded then TriggerClientEvent('kora_consumables:catalog', src, Config.Consumables, Config.ConsumableClasses) end
+    end)
 end)
 
 AddEventHandler('playerDropped', function()

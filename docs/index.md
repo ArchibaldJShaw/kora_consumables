@@ -18,13 +18,15 @@ sidebar_position: 1
 - **Walk while consuming**: by default, the animation plays on the upper body and the player can keep walking. Combat and vehicle entry stay blocked. This can be configured globally, per class or per item.
 - **Screen effects**: liquor uses a built-in "buzzed" effect: a timecycle modifier, camera shake, an optional drunk walk and an optional notification. Smokeables use the kora_lib visuals `alien`, `coke`, `crack`, `meth` or `trevor`.
 - **Limited-use items**: an item with `info.uses` metadata loses one use each time it is used. It is removed only when no uses are left. Items with `keep = true` are never removed.
-- **QBCore compatibility exports**: `AddFood`, `AddDrink`, `AddAlcohol` and `AddCustom` are available as `kora_consumables` exports and as `qb-smallresources` exports. Items added this way are sent to online clients and to players who join later. See [Exports](./api/server-exports.md).
+- **In-game creator**: admins can run `/consumableCreator` to create, edit and delete database-backed consumables. The creator can register a new shared item with `kora_core`, so it is available to all clients after saving. It supports emote names from `kora_emotemenu`, custom animations, two props, status changes and effects. See [Creator](./creator.md).
+- **QBCore compatibility exports**: `AddFood`, `AddDrink`, `AddAlcohol` and `AddCustom` are available as `kora_consumables` exports and as `qb-smallresources` exports. Items added this way are saved and synchronized. See [Exports](./api/server-exports.md).
 - **Cigarette item**: if no other resource defines a `cigarette` shared item, this resource registers one.
 
 ## Documentation map
 
 - [Installation](./installation.md): install steps, start order, requirements, database and commands.
 - [How to use](./how-to-use.md): the use flow, adding items and the item classes.
+- [Creator](./creator.md): create and manage items in-game.
 - [How it works](./how-it-works.md): startup, use flow, movement, screen effects and labels.
 - [Items](./items.md): the default consumables and their effective values, and how to add items.
 - [Events](./events.md): net events, the progress callback and custom client events.
