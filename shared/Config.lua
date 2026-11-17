@@ -22,7 +22,7 @@ Config.allowMovement = true
 -- Hand the prop is attached to, matching the hand the eat/drink animation raises to the mouth.
 -- 'left' or 'right', or a table per class; classes left out use their default
 -- (drink = 'left', food = 'left', liquor = 'right'). Each hand has its own bone, offset and rotation.
-Config.propHand = { drink = 'left', food = 'left', liquor = 'right' }
+Config.propHand = {drink = 'left', food = 'left', liquor = 'right'}
 -- Optional bone override (a bone id such as 18905 SKEL_L_Hand, or a table per class) applied on top of
 -- the chosen hand. nil keeps the hand's default bone. A single item can set prop.bone, prop.offset
 -- and prop.rotation to override everything.

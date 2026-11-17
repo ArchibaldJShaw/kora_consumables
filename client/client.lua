@@ -1,4 +1,3 @@
-
 local buzzedToken = 0
 
 -- Drunk screen effect for alcohol; kora_lib has no buzzed visual, so it is applied here.
@@ -9,13 +8,15 @@ local function buzzed(duration)
     SetTimecycleModifierStrength(0.6)
     ShakeGameplayCam('DRUNK_SHAKE', 0.6)
     if Config.DrunkNotify ~= false and Kora and Kora.notify and Kora.notify.send then
-        Kora.notify.send({ title = Kora.lang('notify.drunk_title'), message = Kora.lang('notify.drunk_unlocked'), type = 'info' })
+        Kora.notify.send({title = Kora.lang('notify.drunk_title'), message = Kora.lang('notify.drunk_unlocked'), type = 'info'})
     end
     local walk = Config.DrunkWalk ~= false and Config.DrunkWalkClipset or nil
     if walk then
         RequestAnimSet(walk)
         local timeout = GetGameTimer() + 5000
-        while not HasAnimSetLoaded(walk) and GetGameTimer() < timeout do Wait(0) end
+        while not HasAnimSetLoaded(walk) and GetGameTimer() < timeout do
+            Wait(0)
+        end
         if HasAnimSetLoaded(walk) then
             SetPedMovementClipset(PlayerPedId(), walk, 1.0)
         else
@@ -27,7 +28,9 @@ local function buzzed(duration)
         if token ~= buzzedToken then return end
         ClearTimecycleModifier()
         StopGameplayCamShaking(true)
-        if walk then ResetPedMovementClipset(PlayerPedId(), 1.0) end
+        if walk then
+            ResetPedMovementClipset(PlayerPedId(), 1.0)
+        end
     end)
 end
 
@@ -63,10 +66,7 @@ local function usableProp(prop, item)
         return prop
     end
     if Config.Debug then
-        Kora.logging.debug('consume.prop_skipped', 'Skipping prop because its model is invalid', {
-            item = tostring(item),
-            model = tostring(model),
-        })
+        Kora.logging.debug('consume.prop_skipped', 'Skipping prop because its model is invalid', {item = tostring(item), model = tostring(model)})
     end
     return nil
 end
@@ -91,20 +91,34 @@ local function movableAnim(anim)
         return anim
     end
     local copy = {}
-    for key, value in pairs(anim) do copy[key] = value end
+    for key, value in pairs(anim) do
+        copy[key] = value
+    end
     copy.flag = (copy.flag or 1) | UPPER_BODY_CONTROL
     return copy
 end
 
 Kora.callback.register('kora_consumables:progress', function(data)
-    assert(data and data.class and data.item, "Invalid data passed to kora_consumables:progress")
-    local itemData = Config.Consumables[data.class] and Config.Consumables[data.class][data.item] or nil
+    assert(data and data.class and data.item, 'Invalid data passed to kora_consumables:progress')
+    local classItems = Config.Consumables[data.class]
+    local itemData = classItems and classItems[data.item]
     if not itemData then
         return false
     end
     local prop = usableProp(itemData.prop, data.item)
+    local progressProp
+    local progressProps
+    if prop then
+        if prop.coords then
+            progressProp = prop
+        else
+            progressProps = {prop}
+        end
+    end
     local disable = itemData.disable
-    if disable == nil then disable = itemData.disableMovement or false end
+    if disable == nil then
+        disable = itemData.disableMovement or false
+    end
     if type(disable) == 'table' and disable.vehicle ~= nil and disable.car == nil then
         disable = Kora.util.deepClone(disable)
         disable.car = disable.vehicle
@@ -124,17 +138,14 @@ Kora.callback.register('kora_consumables:progress', function(data)
         useWhileDead = itemData.useWhileDead or false,
         canCancel = itemData.canCancel == nil or itemData.canCancel,
         anim = anim,
-        prop = prop and prop.coords and prop or nil,
-        props = prop and not prop.coords and { prop } or nil,
+        prop = progressProp,
+        props = progressProps,
         emote = itemData.emote or nil,
         disable = disable,
     })
     if not started then
         if Config.Debug then
-            Kora.logging.debug('consume.progress_failed', 'Progress did not start', {
-                item = tostring(data.item),
-                progress = tostring(progress),
-            })
+            Kora.logging.debug('consume.progress_failed', 'Progress did not start', {item = tostring(data.item), progress = tostring(progress)})
         end
         return false
     end
@@ -146,7 +157,11 @@ end)
 RegisterNetEvent('kora_consumables:register', function(entries)
     if type(entries) ~= 'table' then return end
     for _, entry in ipairs(entries) do
-        if type(entry) == 'table' and type(entry.class) == 'string' and type(entry.item) == 'string' and type(entry.data) == 'table' then
+        if type(entry) == 'table'
+            and type(entry.class) == 'string'
+            and type(entry.item) == 'string'
+            and type(entry.data) == 'table'
+        then
             Config.Consumables[entry.class] = Config.Consumables[entry.class] or {}
             Config.Consumables[entry.class][entry.item] = entry.data
         end

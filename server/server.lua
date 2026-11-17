@@ -51,7 +51,9 @@ end
 local function applyUse(src, item, data, itemData)
     if not takeItem(src, item, data, itemData) then return end
     addStatus(src, data.status)
-    if data.event then TriggerClientEvent(data.event, src, item) end
+    if data.event then
+        TriggerClientEvent(data.event, src, item)
+    end
 end
 
 local function useConsumable(src, category, item, data, itemData)
@@ -70,11 +72,7 @@ local function useConsumable(src, category, item, data, itemData)
     -- The client reports its own result, so a modified client could answer at once.
     -- A real use cannot come back before the progress duration has elapsed.
     if GetGameTimer() - startedAt < (data.duration or 1000) - FINISH_TOLERANCE then
-        Kora.logging.warn('consume.too_fast_ignored', 'Item use finished faster than its duration and was ignored', {
-            playerId = src,
-            item = item,
-            durationMs = data.duration or 1000,
-        })
+        Kora.logging.warn('consume.too_fast_ignored', 'Item use finished faster than its duration and was ignored', {playerId = src, item = item, durationMs = data.duration or 1000})
         return
     end
 
@@ -89,7 +87,9 @@ local function registerUseable(category, item, data)
         using[src] = true
         local ok, err = pcall(useConsumable, src, category, item, data, itemData)
         using[src] = nil
-        if not ok then error(err, 0) end
+        if not ok then
+            error(err, 0)
+        end
     end)
 end
 
@@ -108,25 +108,31 @@ registerUseables()
 -- (water_bottle, sandwich, beer...). Its handlers register when it starts, so a
 -- later inventory (re)start would replace ours; register again to keep ours.
 AddEventHandler('onResourceStart', function(resource)
-    if resource == 'kora_inventory' then registerUseables() end
+    if resource == 'kora_inventory' then
+        registerUseables()
+    end
 end)
 
 -- Legacy qb-smallresources AddFood/AddDrink/AddAlcohol/AddCustom. Only another
 -- server resource can call these. Items still go through the normal useable
 -- flow above, so a use needs the item held and the server removes it.
-local legacyClass = { AddFood = 'food', AddDrink = 'drink', AddAlcohol = 'liquor', AddCustom = 'custom' }
-local legacyStatus = { food = 'hunger', drink = 'thirst', liquor = 'thirst' }
+local legacyClass = {AddFood = 'food', AddDrink = 'drink', AddAlcohol = 'liquor', AddCustom = 'custom'}
+local legacyStatus = {food = 'hunger', drink = 'thirst', liquor = 'thirst'}
 local added = {}
 local lastSync = {}
 local SYNC_COOLDOWN = 5000
 
 local function amount(value)
-    return type(value) == 'number' and value == value and value >= 0 and value <= 100 and value or nil
+    if type(value) ~= 'number' then return nil end
+    if value ~= value or value < 0 or value > 100 then return nil end
+    return value
 end
 
 local function vec(value)
     if type(value) ~= 'table' and type(value) ~= 'vector3' then return nil end
-    local x, y, z = value.x, value.y, value.z
+    local x = value.x
+    local y = value.y
+    local z = value.z
     if type(x) ~= 'number' or type(y) ~= 'number' or type(z) ~= 'number' then return nil end
     return {x = x, y = y, z = z}
 end
@@ -134,24 +140,54 @@ end
 local function customData(source)
     if type(source) ~= 'table' then return nil end
     local data = {}
-    local progress, animation, prop, replenish = source.progress, source.animation, source.prop, source.replenish
+    local progress = source.progress
+    local animation = source.animation
+    local prop = source.prop
+    local replenish = source.replenish
     if type(progress) == 'table' then
-        if type(progress.label) == 'string' then data.label = progress.label end
-        if type(progress.time) == 'number' and progress.time > 0 then data.duration = progress.time end
+        if type(progress.label) == 'string' then
+            data.label = progress.label
+        end
+        if type(progress.time) == 'number' and progress.time > 0 then
+            data.duration = progress.time
+        end
     end
-    if type(animation) == 'table' and type(animation.animDict) == 'string' and type(animation.anim) == 'string' then
+    if type(animation) == 'table'
+        and type(animation.animDict) == 'string'
+        and type(animation.anim) == 'string'
+    then
         data.anim = {dict = animation.animDict, clip = animation.anim, flag = animation.flags}
     end
     if type(prop) == 'table' and type(prop.model) == 'string' then
-        data.prop = {model = prop.model, bone = type(prop.bone) == 'number' and prop.bone or 60309,
-            offset = vec(prop.coords) or {x = 0.0, y = 0.0, z = 0.0},
-            rotation = vec(prop.rotation) or {x = 0.0, y = 0.0, z = 0.0}}
+        data.prop = {
+            model = prop.model,
+            bone = type(prop.bone) == 'number' and prop.bone or 60309,
+            offset = vec(prop.coords) or {
+                x = 0.0,
+                y = 0.0,
+                z = 0.0,
+            },
+            rotation = vec(prop.rotation) or {
+                x = 0.0,
+                y = 0.0,
+                z = 0.0,
+            },
+        }
     end
     if type(replenish) == 'table' then
-        local key = replenish.type == 'Hunger' and 'hunger' or replenish.type == 'Thirst' and 'thirst' or nil
+        local key
+        if replenish.type == 'Hunger' then
+            key = 'hunger'
+        elseif replenish.type == 'Thirst' then
+            key = 'thirst'
+        end
         local value = amount(replenish.replenish)
-        if key and value then data.status = {[key] = value} end
-        if replenish.isAlcohol then data.effects = {visual = 'buzzed', duration = 15000} end
+        if key and value then
+            data.status = {[key] = value}
+        end
+        if replenish.isAlcohol then
+            data.effects = {visual = 'buzzed', duration = 15000}
+        end
         if type(replenish.event) == 'string' and replenish.event ~= '' and not replenish.server then
             data.event = replenish.event
         end
@@ -161,18 +197,30 @@ end
 
 local function legacyAdd(export, name, value)
     local class = legacyClass[export]
-    if type(name) ~= 'string' or name == '' then return false, 'invalid arguments' end
+    if type(name) ~= 'string' or name == '' then
+        return false, 'invalid arguments'
+    end
     for _, items in pairs(Config.Consumables) do
-        if items[name] ~= nil then return false, 'already added' end
+        if items[name] ~= nil then
+            return false, 'already added'
+        end
     end
     local data
     if class == 'custom' then
         data = customData(value)
     elseif amount(value) then
-        data = {status = {[legacyStatus[class]] = value}}
+        data = {
+            status = {
+                [legacyStatus[class]] = value,
+            },
+        }
     end
-    if not data then return false, 'invalid arguments' end
-    if not exports.kora_core:getShared('items', name) then return false, 'item does not exist' end
+    if not data then
+        return false, 'invalid arguments'
+    end
+    if not exports.kora_core:getShared('items', name) then
+        return false, 'item does not exist'
+    end
 
     Config.Consumables[class] = Config.Consumables[class] or {}
     Config.Consumables[class][name] = data
@@ -197,4 +245,6 @@ RegisterNetEvent('kora_consumables:sync', function()
     TriggerClientEvent('kora_consumables:register', src, added)
 end)
 
-AddEventHandler('playerDropped', function() lastSync[source] = nil end)
+AddEventHandler('playerDropped', function()
+    lastSync[source] = nil
+end)

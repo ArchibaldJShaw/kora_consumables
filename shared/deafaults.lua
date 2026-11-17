@@ -1,4 +1,3 @@
-
 local defaults = {
     drink = {
         label = Kora.lang('progress.drink'),
@@ -64,7 +63,7 @@ local defaults = {
                 left = {bone = 60309, offset = {x = -0.01, y = -0.01, z = -0.06}, rotation = {x = 0.0, y = 0.0, z = 0.0}},
                 right = {bone = 28422, offset = {x = 0.01, y = -0.01, z = -0.06}, rotation = {x = 0.0, y = 0.0, z = 0.0}}
             },
-            hand = "right"
+            hand = 'right',
         },
         disable = {move = true, combat = true, vehicle = true},
         status = {thirst = 10},
@@ -103,14 +102,18 @@ end
 defaults.custom = {
     label = Kora.lang('progress.custom'),
     duration = 4000,
-    disable = {move = true, combat = true, vehicle = true}
+    disable = {
+        move = true,
+        combat = true,
+        vehicle = true,
+    },
 }
 
 function ApplyConsumableDefaults(class, item, data)
     local default = defaults[class]
     if not data.label then
         local definition = exports.kora_core:getShared('items', item)
-        data.label = default.label .. (definition and definition.label or "")
+        data.label = default.label .. (definition and definition.label or '')
     end
     if not data.duration then
         data.duration = default.duration
@@ -120,7 +123,7 @@ function ApplyConsumableDefaults(class, item, data)
     end
     if data.prop == nil then
         data.prop = resolveProp(default.prop, class, nil)
-    elseif type(data.prop) == "table" and not data.prop.coords and default.prop then
+    elseif type(data.prop) == 'table' and not data.prop.coords and default.prop then
         -- A partial prop (for example only a model) inherits the class bone, offset and rotation.
         data.prop = resolveProp(default.prop, class, data.prop)
     end
@@ -161,10 +164,14 @@ end
 Config.applyStatusOn = Kora.config.enum(Config.applyStatusOn or 'complete', {
     live = true,
     label = 'Apply effects when',
-    description = 'Chooses when a consumable takes effect and is used up. Finished applies hunger, thirst and other effects only after the eating, drinking or smoking animation completes, and a cancelled use consumes nothing. Start applies them the moment the item is used, before the animation, and cancelling does not undo them.',
+    description = 'Chooses when a consumable takes effect and is used up. '
+        .. 'Finished applies hunger, thirst and other effects only after the eating, '
+        .. 'drinking or smoking animation completes, and a cancelled use consumes nothing. '
+        .. 'Start applies them the moment the item is used, before the animation, '
+        .. 'and cancelling does not undo them.',
     options = {
-        { value = 'complete', label = 'Finished' },
-        { value = 'start', label = 'Start' },
+        {value = 'complete', label = 'Finished'},
+        {value = 'start', label = 'Start'},
     },
 })
 
